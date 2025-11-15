@@ -8,6 +8,7 @@ export default function ExamScreen() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const timeRemainingRef = useRef<number>(90);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -96,14 +97,15 @@ export default function ExamScreen() {
 
       // Start countdown timer
       setTimeRemaining(90);
+      timeRemainingRef.current = 90;
       timerRef.current = window.setInterval(() => {
-        setTimeRemaining((prev: number) => {
-          if (prev <= 1) {
-            handleNextQuestion();
-            return 0;
-          }
-          return prev - 1;
-        });
+        timeRemainingRef.current -= 1;
+        if (timeRemainingRef.current <= 0) {
+          handleNextQuestion();
+          setTimeRemaining(0);
+        } else {
+          setTimeRemaining(timeRemainingRef.current);
+        }
       }, 1000);
 
     } catch (err) {

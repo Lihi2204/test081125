@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useExamStore } from '../store/examStore';
 
 export default function CompletionScreen() {
-  const { student, reset } = useExamStore();
+  const { student } = useExamStore();
 
   useEffect(() => {
     // Clear local storage after showing completion
