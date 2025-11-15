@@ -26,18 +26,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ valid: false, error: 'TOKEN_EXPIRED' });
   }
 
-  // Check if student is in roster
-  const rosterEntry = await getRosterEntry(payload.student_id_hash);
-
-  if (!rosterEntry) {
-    return res.status(404).json({ valid: false, error: 'NOT_IN_ROSTER' });
-  }
-
-  // Check if already completed
-  if (rosterEntry.attempt_status === 'completed') {
-    return res.status(403).json({ valid: false, error: 'ALREADY_COMPLETED' });
-  }
-
   // Check if within allowed time window (15 min before to slot end)
   const now = new Date();
   const slotStart = new Date(payload.slot_start);
@@ -52,30 +40,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
+  // Google Sheets operations wrapped in try-catch
+  let rosterEntry;
+  try {
+    rosterEntry = await getRosterEntry(payload.student_id_hash);
+  } catch (err) {
+    console.error('Error fetching roster entry:', err);
+    return res.status(500).json({
+      valid: false,
+      error: 'SHEETS_ERROR',
+      message: 'Failed to access Google Sheets. Check service account configuration.',
+      details: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
+
+  if (!rosterEntry) {
+    return res.status(404).json({ valid: false, error: 'NOT_IN_ROSTER' });
+  }
+
+  // Check if already completed
+  if (rosterEntry.attempt_status === 'completed') {
+    return res.status(403).json({ valid: false, error: 'ALREADY_COMPLETED' });
+  }
+
   // Create or retrieve session
   let sessionId = uuidv4();
   let status = 'not_started';
 
-  // Check if there's an existing session
-  const existingSession = await getSession(rosterEntry.student_id_hash);
-  if (existingSession && existingSession.status !== 'completed') {
-    sessionId = existingSession.session_id;
-    status = existingSession.status;
-  } else if (!existingSession) {
-    // Create new session entry
-    await createSession({
-      session_id: sessionId,
-      student_id_hash: payload.student_id_hash,
-      id_last4: payload.id_last4,
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      email: payload.email,
-      slot_start: payload.slot_start,
-      slot_end: payload.slot_end,
-      status: 'not_started',
-      consent: false,
-      precheck_passed: false,
-      finalized: false,
+  try {
+    // Check if there's an existing session
+    const existingSession = await getSession(rosterEntry.student_id_hash);
+    if (existingSession && existingSession.status !== 'completed') {
+      sessionId = existingSession.session_id;
+      status = existingSession.status;
+    } else if (!existingSession) {
+      // Create new session entry
+      await createSession({
+        session_id: sessionId,
+        student_id_hash: payload.student_id_hash,
+        id_last4: payload.id_last4,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email,
+        slot_start: payload.slot_start,
+        slot_end: payload.slot_end,
+        status: 'not_started',
+        consent: false,
+        precheck_passed: false,
+        finalized: false,
+      });
+    }
+  } catch (err) {
+    console.error('Error managing session:', err);
+    return res.status(500).json({
+      valid: false,
+      error: 'SHEETS_ERROR',
+      message: 'Failed to manage exam session.',
+      details: err instanceof Error ? err.message : 'Unknown error',
     });
   }
 

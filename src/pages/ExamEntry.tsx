@@ -47,6 +47,10 @@ export default function ExamEntry() {
             case 'NOT_IN_ROSTER':
               setError('לא נמצאת ברשימת הסטודנטים. נא לפנות למרצה.');
               break;
+            case 'SHEETS_ERROR':
+              console.error('Google Sheets error:', data.details);
+              setError('שגיאה בגישה למערכת. נא לפנות למרצה ולציין: ' + (data.details || 'Google Sheets error'));
+              break;
             default:
               setError('שגיאה לא צפויה. נא לפנות למרצה.');
           }
@@ -64,7 +68,14 @@ export default function ExamEntry() {
         navigate('/exam/consent');
       } catch (err) {
         console.error('Token verification error:', err);
-        setError('שגיאת תקשורת. נא לנסות שוב מאוחר יותר.');
+        // Check if it's a network error or JSON parsing error
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+          setError('שגיאת רשת - לא ניתן להתחבר לשרת. נא לבדוק חיבור אינטרנט.');
+        } else if (err instanceof SyntaxError) {
+          setError('שגיאה בתגובת השרת (JSON parsing error). נא לפנות למרצה.');
+        } else {
+          setError(`שגיאת תקשורת: ${err instanceof Error ? err.message : 'Unknown error'}. נא לנסות שוב מאוחר יותר.`);
+        }
         setLoading(false);
       }
     };
