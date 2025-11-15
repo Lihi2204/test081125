@@ -31,7 +31,29 @@ export default function ExamEntry() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await response.json();
+        // Check if response is OK before parsing JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('Non-JSON response:', response.status, text.substring(0, 500));
+          setError(`שגיאת שרת (${response.status}): השרת לא מחזיר JSON. נא לבדוק את הלוגים בVercel.`);
+          setLoading(false);
+          return;
+        }
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          setError('שגיאה בפענוח תגובת השרת. נא לפנות למרצה.');
+          setLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          console.error('Server error response:', response.status, data);
+        }
 
         if (!data.valid) {
           switch (data.error) {
@@ -52,7 +74,7 @@ export default function ExamEntry() {
               setError('שגיאה בגישה למערכת. נא לפנות למרצה ולציין: ' + (data.details || 'Google Sheets error'));
               break;
             default:
-              setError('שגיאה לא צפויה. נא לפנות למרצה.');
+              setError(`שגיאה: ${data.error || 'לא צפויה'}. ${data.message || 'נא לפנות למרצה.'}`);
           }
           setLoading(false);
           return;
