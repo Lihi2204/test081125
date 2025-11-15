@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 
 // Lazy load pages for better performance
 const ExamEntry = lazy(() => import('./pages/ExamEntry'));
+const TestLogin = lazy(() => import('./pages/TestLogin'));
 const ConsentScreen = lazy(() => import('./pages/ConsentScreen'));
 const PrecheckScreen = lazy(() => import('./pages/PrecheckScreen'));
 const BufferScreen = lazy(() => import('./pages/BufferScreen'));
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           {/* Student Exam Flow */}
           <Route path="/exam" element={<ExamEntry />} />
+          <Route path="/test" element={<TestLogin />} />
           <Route path="/exam/consent" element={<ConsentScreen />} />
           <Route path="/exam/precheck" element={<PrecheckScreen />} />
           <Route path="/exam/buffer" element={<BufferScreen />} />
@@ -43,8 +45,8 @@ function App() {
           <Route path="/admin/session/:id" element={<AdminSessionDetail />} />
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/exam" replace />} />
-          <Route path="*" element={<Navigate to="/exam" replace />} />
+          <Route path="/" element={<Navigate to="/test" replace />} />
+          <Route path="*" element={<Navigate to="/test" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
