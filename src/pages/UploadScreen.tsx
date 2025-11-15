@@ -61,21 +61,56 @@ export default function UploadScreen() {
         throw new Error('Failed to finalize upload');
       }
 
-      setUploadProgress(80);
       setCurrentStep('processing');
       setStatus('uploading');
 
-      // Simulate processing completion (in real app, this would be webhooks/polling)
-      setTimeout(() => {
-        setUploadProgress(100);
-        setCurrentStep('done');
-        setStatus('completed');
+      // Step 1: Transcribe audio
+      setUploadProgress(70);
+      const transcribeResponse = await fetch('/api/session/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
 
-        // Navigate to completion screen
-        setTimeout(() => {
-          navigate('/exam/complete');
-        }, 2000);
-      }, 3000);
+      if (!transcribeResponse.ok) {
+        const errorData = await transcribeResponse.json();
+        throw new Error(errorData.error || 'Failed to transcribe audio');
+      }
+
+      // Step 2: Score answers with Claude
+      setUploadProgress(85);
+      const scoreResponse = await fetch('/api/session/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+
+      if (!scoreResponse.ok) {
+        const errorData = await scoreResponse.json();
+        throw new Error(errorData.error || 'Failed to score answers');
+      }
+
+      // Step 3: Send notification email
+      setUploadProgress(95);
+      const notifyResponse = await fetch('/api/session/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+
+      if (!notifyResponse.ok) {
+        // Notification failure is non-blocking, just log it
+        console.error('Failed to send notification email');
+      }
+
+      setUploadProgress(100);
+      setCurrentStep('done');
+      setStatus('completed');
+
+      // Navigate to completion screen
+      setTimeout(() => {
+        navigate('/exam/complete');
+      }, 2000);
 
     } catch (err) {
       console.error('Upload error:', err);

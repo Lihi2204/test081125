@@ -141,3 +141,29 @@ export async function listOldFiles(daysOld: number = 14): Promise<Array<{ id: st
     createdTime: file.createdTime || '',
   }));
 }
+
+// List files by session ID prefix
+export async function listSessionFiles(sessionId: string): Promise<Array<{ id: string; name: string; questionId: number }>> {
+  const drive = getDrive();
+
+  const response = await drive.files.list({
+    q: `'${DRIVE_FOLDER_ID}' in parents and name contains '${sessionId}'`,
+    fields: 'files(id,name)',
+    orderBy: 'name',
+  });
+
+  const files = (response.data.files || []).map((file) => {
+    const name = file.name || '';
+    // Extract question ID from filename pattern: {session_id}_q{question_id}_{type}_{timestamp}.webm
+    const match = name.match(/_q(\d+)_/);
+    const questionId = match ? parseInt(match[1]) : 0;
+
+    return {
+      id: file.id || '',
+      name,
+      questionId,
+    };
+  });
+
+  return files.filter((f) => f.questionId > 0);
+}
