@@ -95,15 +95,16 @@ export default function ExamScreen() {
       setStoreRecording(true);
 
       // Start countdown timer
-      setTimeRemaining(90);
+      let timeLeft = 90;
+      setTimeRemaining(timeLeft);
       timerRef.current = window.setInterval(() => {
-        setTimeRemaining((prev: number) => {
-          if (prev <= 1) {
-            handleNextQuestion();
-            return 0;
-          }
-          return prev - 1;
-        });
+        timeLeft -= 1;
+        if (timeLeft <= 0) {
+          setTimeRemaining(0);
+          handleNextQuestion();
+        } else {
+          setTimeRemaining(timeLeft);
+        }
       }, 1000);
 
     } catch (err) {

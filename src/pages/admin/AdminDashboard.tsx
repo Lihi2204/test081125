@@ -3,16 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../../store/examStore';
 import type { SessionStatus } from '../../types';
 
-interface SessionListItem {
-  session_id: string;
-  student_name: string;
-  id_last4: string;
-  date: string;
-  total_score?: number;
-  status: SessionStatus;
-  finalized: boolean;
-}
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { isAuthenticated, userEmail, sessions, setSessions, logout } = useAdminStore();
