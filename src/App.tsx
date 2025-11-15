@@ -12,6 +12,7 @@ const CompletionScreen = lazy(() => import('./pages/CompletionScreen'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminSessionDetail = lazy(() => import('./pages/admin/AdminSessionDetail'));
+const TestEntry = lazy(() => import('./pages/TestEntry'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -36,6 +37,9 @@ function App() {
           <Route path="/exam/start" element={<ExamScreen />} />
           <Route path="/exam/upload" element={<UploadScreen />} />
           <Route path="/exam/complete" element={<CompletionScreen />} />
+
+          {/* Test Mode - bypasses authentication for local testing */}
+          <Route path="/test" element={<TestEntry />} />
 
           {/* Admin Dashboard */}
           <Route path="/admin" element={<AdminLogin />} />
