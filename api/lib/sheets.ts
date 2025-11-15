@@ -3,9 +3,18 @@ import type { ExamSession, RosterEntry, Question } from '../../src/types';
 
 // Initialize Google Sheets client
 function getGoogleAuth() {
-  const credentials = JSON.parse(
-    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '', 'base64').toString()
-  );
+  const keyBase64 = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+
+  if (!keyBase64) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+  }
+
+  let credentials;
+  try {
+    credentials = JSON.parse(Buffer.from(keyBase64, 'base64').toString());
+  } catch (err) {
+    throw new Error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY - invalid base64 or JSON');
+  }
 
   return new google.auth.GoogleAuth({
     credentials,
@@ -22,6 +31,13 @@ function getSheets() {
 const SESSIONS_SHEET_ID = process.env.SESSIONS_SHEET_ID || '';
 const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '';
 const QUESTIONS_SHEET_ID = process.env.QUESTIONS_SHEET_ID || '';
+
+// Validate required environment variables
+function validateSheetConfig(sheetId: string, sheetName: string): void {
+  if (!sheetId) {
+    throw new Error(`${sheetName} environment variable is not set`);
+  }
+}
 
 // Helper to convert row to ExamSession object
 function rowToSession(row: string[], headers: string[]): ExamSession {
@@ -80,6 +96,7 @@ function sessionToRow(session: Partial<ExamSession>, headers: string[]): string[
 
 // Session CRUD operations
 export async function createSession(session: Partial<ExamSession>): Promise<boolean> {
+  validateSheetConfig(SESSIONS_SHEET_ID, 'SESSIONS_SHEET_ID');
   const sheets = getSheets();
 
   // Get headers
@@ -104,6 +121,7 @@ export async function createSession(session: Partial<ExamSession>): Promise<bool
 }
 
 export async function getSession(sessionId: string): Promise<ExamSession | null> {
+  validateSheetConfig(SESSIONS_SHEET_ID, 'SESSIONS_SHEET_ID');
   const sheets = getSheets();
 
   // Get all data
@@ -217,6 +235,7 @@ export async function getAllSessions(): Promise<ExamSession[]> {
 
 // Roster operations
 export async function getRosterEntry(studentIdHash: string): Promise<RosterEntry | null> {
+  validateSheetConfig(ROSTER_SHEET_ID, 'ROSTER_SHEET_ID');
   const sheets = getSheets();
 
   const response = await sheets.spreadsheets.values.get({
