@@ -12,6 +12,7 @@ const CompletionScreen = lazy(() => import('./pages/CompletionScreen'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminSessionDetail = lazy(() => import('./pages/admin/AdminSessionDetail'));
+const VoiceExamApp = lazy(() => import('./pages/VoiceExamApp'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -41,6 +42,9 @@ function App() {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/session/:id" element={<AdminSessionDetail />} />
+
+          {/* Voice Exam Bot */}
+          <Route path="/voice-exam" element={<VoiceExamApp />} />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/exam" replace />} />
